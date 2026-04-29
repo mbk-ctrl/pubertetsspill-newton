@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Pubertet – Flashcards</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    #game {
+        background: white;
+        padding: 30px;
+        width: 500px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .question {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+    .answers button {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        padding: 12px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        background: #ddd;
+    }
+    .answers button.correct {
+        background: #4CAF50;
+        color: white;
+    }
+    .answers button.wrong {
+        background: #F44336;
+        color: white;
+    }
+    #feedback {
+        margin-top: 15px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    #score {
+        margin-top: 10px;
+        font-size: 16px;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="game">
+    <div class="question" id="question"></div>
+    <div class="answers" id="answers"></div>
+    <div id="feedback"></div>
+    <div id="score">Poeng: 0</div>
+</div>
+
+<script>
+const cards = [
+ {q:"Hva kalles perioden der kroppen forandrer seg fra barn til voksen?",
+  a:["Pubertet","Fosterstadiet"], c:0},
+ {q:"Hvilket hormon starter puberteten?",
+  a:["Kjønnshormoner","Insulin"], c:0},
+ {q:"Hva skjer ofte først hos jenter i puberteten?",
+  a:["Brystene begynner å vokse","Stemmen blir dypere"], c:0},
+ {q:"Hva skjer ofte først hos gutter i puberteten?",
+  a:["Testiklene vokser","Menstruasjon starter"], c:0},
+ {q:"Hva betyr menstruasjon?",
+  a:["Blødning fra livmoren","Vekst av muskler"], c:0},
+ {q:"Hva er sædceller?",
+  a:["Mannlige kjønnsceller","Kvinnelige hormoner"], c:0},
+ {q:"Hva er eggceller?",
+  a:["Kvinnelige kjønnsceller","Muskelfibre"], c:0},
+ {q:"Hvor produseres sædceller?",
+  a:["I testiklene","I hjernen"], c:0},
+ {q:"Hvor oppstår menstruasjon?",
+  a:["I livmoren","I magen"], c:0},
+ {q:"Hva kan skje med stemmen i puberteten?",
+  a:["Den kan bli dypere","Den forsvinner"], c:0},
+ {q:"Hva er vanlig hudforandring i puberteten?",
+  a:["Kviser","Frostskader"], c:0},
+ {q:"Hvorfor får mange mer svette i puberteten?",
+  a:["Hormonforandringer","Fordi de løper mer"], c:0},
+ {q:"Hva styrer humørsvingninger i puberteten?",
+  a:["Hormoner","Bein"], c:0},
