@@ -178,3 +178,62 @@ function loadCard() {
   if (mode === "ask") {
     options = [
       { content: `<span class="symbol">${current.ask[0][0]}</span><br>${current.ask[0][1]}`, correct:true },
+      { content: `<span class="symbol">${current.ask[1][0]}</span><br>${current.ask[1][1]}`, correct:false }
+    ];
+  } else {
+    options = [
+      { content: current.text[0], correct:true },
+      { content: current.text[1], correct:false }
+    ];
+  }
+
+  shuffle(options);
+
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.innerHTML = opt.content;
+    btn.onclick = () => checkAnswer(btn, opt.correct);
+    answersDiv.appendChild(btn);
+  });
+}
+
+// ========= SVAR =========
+function checkAnswer(button, isCorrect) {
+  const buttons = document.querySelectorAll("#answers button");
+  buttons.forEach(b => b.disabled = true);
+
+  if (isCorrect) {
+    button.classList.add("correct");
+    document.getElementById("feedback").textContent = "Bra jobbet!";
+    score++;
+
+    setTimeout(() => {
+      index++;
+      index < round.length ? loadCard() : finishRound();
+    }, 800);
+
+  } else {
+    button.classList.add("wrong");
+    document.getElementById("feedback").textContent = "Prøv igjen";
+    setTimeout(loadCard, 1200);
+  }
+}
+
+// ========= SLUTT =========
+function finishRound() {
+  document.getElementById("question").textContent = "Runden er ferdig 🎉";
+  document.getElementById("answers").innerHTML = "";
+  document.getElementById("feedback").textContent =
+    "Du fikk " + score + " av " + QUESTIONS_PER_ROUND;
+  document.getElementById("restartBtn").style.display = "block";
+}
+
+function showMenu() {
+  document.getElementById("play").style.display = "none";
+  document.getElementById("menu").style.display = "block";
+}
+</script>
+
+</body>
+</html>
+``
