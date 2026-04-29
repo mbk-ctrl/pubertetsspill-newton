@@ -3,54 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pubertet – Flashcardspill</title>
+<title>Pubertet – Flashcards</title>
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background:#f2f2f2;
-    margin:0;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+  font-family: Arial, sans-serif;
+  background:#f2f2f2;
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
 #game {
-    background:white;
-    padding:30px;
-    width:420px;
-    max-width:90%;
-    border-radius:10px;
-    text-align:center;
-    box-shadow:0 0 15px rgba(0,0,0,0.2);
+  background:white;
+  padding:30px;
+  width:420px;
+  max-width:90%;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 0 15px rgba(0,0,0,0.2);
 }
 
 button {
-    width:100%;
-    padding:14px;
-    margin:8px 0;
-    font-size:16px;
-    cursor:pointer;
-    border:none;
-    border-radius:6px;
-    background:#dddddd;
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  font-size:16px;
+  cursor:pointer;
+  border:none;
+  border-radius:6px;
+  background:#dddddd;
 }
 
 .correct { background:#4CAF50; color:white; }
-.wrong   { background:#F44336; color:white; }
+.wrong { background:#F44336; color:white; }
 
 #feedback { font-weight:bold; min-height:24px; margin-top:10px; }
 #score { margin-top:10px; }
 
 #restartBtn {
-    display:none;
-    background:#2196F3;
-    color:white;
+  display:none;
+  background:#2196F3;
+  color:white;
 }
 
 .symbol {
-    font-size:40px;
+  font-size:38px;
 }
 </style>
 </head>
@@ -61,79 +61,120 @@ button {
 
 <!-- MENY -->
 <div id="menu">
-    <h2>Velg spillmodus</h2>
-    <button onclick="setMode('text')">📘 Kun tekst</button>
-    <button onclick="setMode('ask')">🗣️ ASK (symbol + enkel tekst)</button>
+  <h2>Velg spillmodus</h2>
+  <button type="button" id="textMode">📘 Kun tekst</button>
+  <button type="button" id="askMode">🗣️ ASK (symbol + tekst)</button>
 </div>
 
 <!-- SPILL -->
 <div id="play" style="display:none;">
-    <div id="question"></div>
-    <div id="answers"></div>
-    <div id="feedback"></div>
-    <div id="score">Poeng: 0</div>
-    <button id="restartBtn" onclick="showMenu()">Spill igjen</button>
+  <div id="question"></div>
+  <div id="answers"></div>
+  <div id="feedback"></div>
+  <div id="score">Poeng: 0</div>
+  <button id="restartBtn" type="button">Spill igjen</button>
 </div>
 
 </div>
 
 <script>
-let mode = "text";
-let score = 0;
-let index = 0;
-let roundQuestions = [];
+// ========= KONFIG =========
+const QUESTIONS_PER_ROUND = 10;
 
-// 🔹 SPØRSMÅLSBANK (25 stk)
+// ========= SPØRSMÅLSBANK =========
 const questionBank = [
- { q:"Hva kalles perioden kroppen endrer seg?", 
+ { q:"Hva kalles perioden kroppen endrer seg?",
    text:["Pubertet","Barndom"],
-   ask:[["🧍➡️🧑","Pubertet"],["❌","Nei"]],
-   c:0 },
+   ask:[["🧍➡️🧑","Pubertet"],["❌","Nei"]] },
 
- { q:"Hva starter puberteten?", 
+ { q:"Hva starter puberteten?",
    text:["Hormoner","Mat"],
-   ask:[["🧪","Hormoner"],["🍔","Mat"]],
-   c:0 },
+   ask:[["🧪","Hormoner"],["🍔","Mat"]] },
 
- { q:"Hva skjer hos jenter?",
+ { q:"Hva skjer ofte hos jenter?",
    text:["Brystene vokser","Stemmen blir dyp"],
-   ask:[["👩⬆️","Vekst"],["❌","Nei"]],
-   c:0 },
+   ask:[["👩⬆️","Vekst"],["❌","Nei"]] },
 
- { q:"Hva skjer hos gutter?",
+ { q:"Hva skjer ofte hos gutter?",
    text:["Stemmen blir dyp","Menstruasjon"],
-   ask:[["🎤⬇️","Stemmen"],["❌","Nei"]],
-   c:0 },
+   ask:[["🎤⬇️","Stemmen"],["❌","Nei"]] },
 
  { q:"Er puberteten lik for alle?",
    text:["Nei","Ja"],
-   ask:[["❌","Nei"],["✅","Ja"]],
-   c:0 },
+   ask:[["❌","Nei"],["✅","Ja"]] },
 
  { q:"Hva kan endre seg i puberteten?",
    text:["Følelser","Øyenfarge"],
-   ask:[["😊😡","Følelser"],["👀","Øyne"]],
-   c:0 },
+   ask:[["😊😡","Følelser"],["👀","Øyne"]] },
 
  { q:"Hva er vanlig med huden?",
    text:["Kviser","Sår"],
-   ask:[["😬","Kviser"],["🩹","Sår"]],
-   c:0 },
+   ask:[["😬","Kviser"],["🩹","Sår"]] },
 
  { q:"Hva kan hjelpe hvis det er vanskelig?",
    text:["Snakke med voksen","Holde alt inne"],
-   ask:[["🗣️👨","Snakke"],["🤐","Tie"]],
-   c:0 },
+   ask:[["🗣️👨","Snakke"],["🤐","Tie"]] },
 
  { q:"Hva gjør kroppen i puberteten?",
    text:["Vokser","Krymper"],
-   ask:[["📏⬆️","Vokser"],["⬇️","Krymper"]],
-   c:0 },
+   ask:[["📏⬆️","Vokser"],["⬇️","Krymper"]] },
 
  { q:"Er pubertet normalt?",
    text:["Ja","Nei"],
-   ask:[["✅","Ja"],["❌","Nei"]],
-   c:0 },
+   ask:[["✅","Ja"],["❌","Nei"]] },
 
- // resten (15) brukes kun som tekst/ASK med symbol
- { q:"Kan puberteten starte tidlig eller sent?", text:["Ja","Nei"], ask:[["✅","Ja"],["❌","Nei"]], c:0 },
+ { q:"Kan puberteten starte tidlig eller sent?",
+   text:["Ja","Nei"],
+   ask:[["✅","Ja"],["❌","Nei"]] },
+
+ { q:"Hva kan bli sterkere i puberteten?",
+   text:["Svette","Syn"],
+   ask:[["💦","Svette"],["👀","Syn"]] }
+];
+
+// ========= VARIABLER =========
+let mode = "text";
+let round = [];
+let index = 0;
+let score = 0;
+
+// ========= HJELP =========
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+// ========= START =========
+document.getElementById("textMode").onclick = () => startGame("text");
+document.getElementById("askMode").onclick  = () => startGame("ask");
+document.getElementById("restartBtn").onclick = showMenu;
+
+function startGame(chosenMode) {
+  mode = chosenMode;
+  score = 0;
+  index = 0;
+
+  round = shuffle([...questionBank]).slice(0, QUESTIONS_PER_ROUND);
+
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("play").style.display = "block";
+  document.getElementById("restartBtn").style.display = "none";
+
+  loadCard();
+}
+
+// ========= VIS SPØRSMÅL =========
+function loadCard() {
+  const current = round[index];
+  document.getElementById("question").textContent = current.q;
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("score").textContent = "Poeng: " + score;
+
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+
+  // Lag svarobjekter og shuffle
+  let options = [];
+
+  if (mode === "ask") {
+    options = [
+      { content: `<span class="symbol">${current.ask[0][0]}</span><br>${current.ask[0][1]}`, correct:true },
