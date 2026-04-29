@@ -2,97 +2,138 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pubertet – Flashcardspill</title>
+
 <style>
 body {
     font-family: Arial, sans-serif;
     background:#f2f2f2;
+    margin:0;
+    height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
-    height:100vh;
 }
+
 #game {
     background:white;
     padding:30px;
-    width:400px;
+    width:420px;
+    max-width:90%;
     border-radius:10px;
     text-align:center;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
 }
+
 button {
     width:100%;
-    padding:12px;
-    margin:6px 0;
+    padding:14px;
+    margin:8px 0;
     font-size:16px;
     cursor:pointer;
+    border:none;
+    border-radius:6px;
+    background:#dddddd;
 }
+
 .correct { background:#4CAF50; color:white; }
-.wrong { background:#F44336; color:white; }
+.wrong   { background:#F44336; color:white; }
+
+#feedback { font-weight:bold; min-height:24px; margin-top:10px; }
+#score { margin-top:10px; }
+
+#restartBtn {
+    display:none;
+    background:#2196F3;
+    color:white;
+}
+
+.symbol {
+    font-size:40px;
+}
 </style>
 </head>
 
 <body>
 
 <div id="game">
-    <h2 id="question"></h2>
+
+<!-- MENY -->
+<div id="menu">
+    <h2>Velg spillmodus</h2>
+    <button onclick="setMode('text')">📘 Kun tekst</button>
+    <button onclick="setMode('ask')">🗣️ ASK (symbol + enkel tekst)</button>
+</div>
+
+<!-- SPILL -->
+<div id="play" style="display:none;">
+    <div id="question"></div>
     <div id="answers"></div>
-    <p id="feedback"></p>
-    <p id="score">Poeng: 0</p>
+    <div id="feedback"></div>
+    <div id="score">Poeng: 0</div>
+    <button id="restartBtn" onclick="showMenu()">Spill igjen</button>
+</div>
+
 </div>
 
 <script>
-const cards = [
- {q:"Hva kalles perioden der kroppen forandrer seg?", a:["Pubertet","Barndom"], c:0},
- {q:"Hvilke hormoner starter puberteten?", a:["Kjønnshormoner","Vitaminer"], c:0},
- {q:"Hva skjer ofte hos jenter i puberteten?", a:["Brystene vokser","Stemmen blir lysere"], c:0},
- {q:"Hva skjer ofte hos gutter i puberteten?", a:["Stemmen blir dypere","Menstruasjon starter"], c:0}
-];
-
-let i = 0;
+let mode = "text";
 let score = 0;
+let index = 0;
+let roundQuestions = [];
 
-function loadCard() {
-  document.getElementById("feedback").textContent = "";
-  document.getElementById("question").textContent = cards[i].q;
-  const answers = document.getElementById("answers");
-  answers.innerHTML = "";
-  cards[i].a.forEach((text, index) => {
-    const btn = document.createElement("button");
-    btn.textContent = text;
-    btn.onclick = () => checkAnswer(btn, index);
-    answers.appendChild(btn);
-  });
-}
+// 🔹 SPØRSMÅLSBANK (25 stk)
+const questionBank = [
+ { q:"Hva kalles perioden kroppen endrer seg?", 
+   text:["Pubertet","Barndom"],
+   ask:[["🧍➡️🧑","Pubertet"],["❌","Nei"]],
+   c:0 },
 
-function checkAnswer(button, choice) {
-  const correct = cards[i].c;
-  const buttons = document.querySelectorAll("button");
-  buttons.forEach(b => b.disabled = true);
+ { q:"Hva starter puberteten?", 
+   text:["Hormoner","Mat"],
+   ask:[["🧪","Hormoner"],["🍔","Mat"]],
+   c:0 },
 
-  if (choice === correct) {
-    button.classList.add("correct");
-    document.getElementById("feedback").textContent = "Bra jobbet!";
-    score++;
-    setTimeout(() => {
-      i++;
-      if (i < cards.length) {
-        loadCard();
-      } else {
-        document.getElementById("question").textContent = "Ferdig 🎉";
-        document.getElementById("answers").innerHTML = "";
-      }
-      document.getElementById("score").textContent = "Poeng: " + score;
-    }, 800);
-  } else {
-    button.classList.add("wrong");
-    buttons[correct].classList.add("correct");
-    document.getElementById("feedback").textContent = "Prøv igjen";
-    setTimeout(loadCard, 1000);
-  }
-}
+ { q:"Hva skjer hos jenter?",
+   text:["Brystene vokser","Stemmen blir dyp"],
+   ask:[["👩⬆️","Vekst"],["❌","Nei"]],
+   c:0 },
 
-loadCard();
-</script>
+ { q:"Hva skjer hos gutter?",
+   text:["Stemmen blir dyp","Menstruasjon"],
+   ask:[["🎤⬇️","Stemmen"],["❌","Nei"]],
+   c:0 },
 
-</body>
-</html>
+ { q:"Er puberteten lik for alle?",
+   text:["Nei","Ja"],
+   ask:[["❌","Nei"],["✅","Ja"]],
+   c:0 },
+
+ { q:"Hva kan endre seg i puberteten?",
+   text:["Følelser","Øyenfarge"],
+   ask:[["😊😡","Følelser"],["👀","Øyne"]],
+   c:0 },
+
+ { q:"Hva er vanlig med huden?",
+   text:["Kviser","Sår"],
+   ask:[["😬","Kviser"],["🩹","Sår"]],
+   c:0 },
+
+ { q:"Hva kan hjelpe hvis det er vanskelig?",
+   text:["Snakke med voksen","Holde alt inne"],
+   ask:[["🗣️👨","Snakke"],["🤐","Tie"]],
+   c:0 },
+
+ { q:"Hva gjør kroppen i puberteten?",
+   text:["Vokser","Krymper"],
+   ask:[["📏⬆️","Vokser"],["⬇️","Krymper"]],
+   c:0 },
+
+ { q:"Er pubertet normalt?",
+   text:["Ja","Nei"],
+   ask:[["✅","Ja"],["❌","Nei"]],
+   c:0 },
+
+ // resten (15) brukes kun som tekst/ASK med symbol
+ { q:"Kan puberteten starte tidlig eller sent?", text:["Ja","Nei"], ask:[["✅","Ja"],["❌","Nei"]], c:0 },
