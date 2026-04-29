@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -16,14 +17,12 @@ body {
   align-items:center;
 }
 
-#game {
+#box {
   background:white;
   padding:30px;
   width:420px;
-  max-width:90%;
   border-radius:10px;
   text-align:center;
-  box-shadow:0 0 15px rgba(0,0,0,0.2);
 }
 
 button {
@@ -31,209 +30,150 @@ button {
   padding:14px;
   margin:8px 0;
   font-size:16px;
-  cursor:pointer;
-  border:none;
-  border-radius:6px;
-  background:#dddddd;
 }
 
 .correct { background:#4CAF50; color:white; }
 .wrong { background:#F44336; color:white; }
 
-#feedback { font-weight:bold; min-height:24px; margin-top:10px; }
-#score { margin-top:10px; }
+.symbol { font-size:36px; }
 
-#restartBtn {
+#play, #restart {
   display:none;
-  background:#2196F3;
-  color:white;
-}
-
-.symbol {
-  font-size:38px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="game">
+<div id="box">
 
 <!-- MENY -->
 <div id="menu">
   <h2>Velg spillmodus</h2>
-  <button type="button" id="textMode">📘 Kun tekst</button>
-  <button type="button" id="askMode">🗣️ ASK (symbol + tekst)</button>
+  <button onclick="startGame('text')">📘 Kun tekst</button>
+  <button onclick="startGame('ask')">🗣️ ASK (symbol + tekst)</button>
 </div>
 
 <!-- SPILL -->
-<div id="play" style="display:none;">
+<div id="play">
   <div id="question"></div>
   <div id="answers"></div>
   <div id="feedback"></div>
   <div id="score">Poeng: 0</div>
-  <button id="restartBtn" type="button">Spill igjen</button>
 </div>
+
+<button id="restart" onclick="resetGame()">Spill igjen</button>
 
 </div>
 
 <script>
-// ========= KONFIG =========
-const QUESTIONS_PER_ROUND = 10;
+let mode = "text";
+let score = 0;
+let index = 0;
+let round = [];
 
-// ========= SPØRSMÅLSBANK =========
-const questionBank = [
- { q:"Hva kalles perioden kroppen endrer seg?",
-   text:["Pubertet","Barndom"],
-   ask:[["🧍➡️🧑","Pubertet"],["❌","Nei"]] },
-
- { q:"Hva starter puberteten?",
-   text:["Hormoner","Mat"],
-   ask:[["🧪","Hormoner"],["🍔","Mat"]] },
-
- { q:"Hva skjer ofte hos jenter?",
-   text:["Brystene vokser","Stemmen blir dyp"],
-   ask:[["👩⬆️","Vekst"],["❌","Nei"]] },
-
- { q:"Hva skjer ofte hos gutter?",
-   text:["Stemmen blir dyp","Menstruasjon"],
-   ask:[["🎤⬇️","Stemmen"],["❌","Nei"]] },
-
- { q:"Er puberteten lik for alle?",
-   text:["Nei","Ja"],
-   ask:[["❌","Nei"],["✅","Ja"]] },
-
- { q:"Hva kan endre seg i puberteten?",
-   text:["Følelser","Øyenfarge"],
-   ask:[["😊😡","Følelser"],["👀","Øyne"]] },
-
- { q:"Hva er vanlig med huden?",
-   text:["Kviser","Sår"],
-   ask:[["😬","Kviser"],["🩹","Sår"]] },
-
- { q:"Hva kan hjelpe hvis det er vanskelig?",
-   text:["Snakke med voksen","Holde alt inne"],
-   ask:[["🗣️👨","Snakke"],["🤐","Tie"]] },
-
- { q:"Hva gjør kroppen i puberteten?",
-   text:["Vokser","Krymper"],
-   ask:[["📏⬆️","Vokser"],["⬇️","Krymper"]] },
-
- { q:"Er pubertet normalt?",
-   text:["Ja","Nei"],
-   ask:[["✅","Ja"],["❌","Nei"]] },
-
- { q:"Kan puberteten starte tidlig eller sent?",
-   text:["Ja","Nei"],
-   ask:[["✅","Ja"],["❌","Nei"]] },
-
- { q:"Hva kan bli sterkere i puberteten?",
-   text:["Svette","Syn"],
-   ask:[["💦","Svette"],["👀","Syn"]] }
+const QUESTIONS = [
+  {
+    q: "Hva kalles perioden kroppen endrer seg?",
+    text: ["Pubertet","Barndom"],
+    ask: [["🧍➡️🧑","Pubertet"],["❌","Nei"]]
+  },
+  {
+    q: "Hva starter puberteten?",
+    text: ["Hormoner","Mat"],
+    ask: [["🧪","Hormoner"],["🍔","Mat"]]
+  },
+  {
+    q: "Hva skjer hos gutter?",
+    text: ["Stemmen blir dyp","Menstruasjon"],
+    ask: [["🎤⬇️","Stemmen"],["❌","Nei"]]
+  },
+  {
+    q: "Er pubertet normalt?",
+    text: ["Ja","Nei"],
+    ask: [["✅","Ja"],["❌","Nei"]]
+  },
+  {
+    q: "Hva kan hjelpe hvis det er vanskelig?",
+    text: ["Snakke med voksen","Holde alt inne"],
+    ask: [["🗣️","Snakke"],["🤐","Tie"]]
+  }
 ];
 
-// ========= VARIABLER =========
-let mode = "text";
-let round = [];
-let index = 0;
-let score = 0;
-
-// ========= HJELP =========
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
-}
-
-// ========= START =========
-document.getElementById("textMode").onclick = () => startGame("text");
-document.getElementById("askMode").onclick  = () => startGame("ask");
-document.getElementById("restartBtn").onclick = showMenu;
-
+// START SPILL
 function startGame(chosenMode) {
   mode = chosenMode;
   score = 0;
   index = 0;
 
-  round = shuffle([...questionBank]).slice(0, QUESTIONS_PER_ROUND);
-
   document.getElementById("menu").style.display = "none";
   document.getElementById("play").style.display = "block";
-  document.getElementById("restartBtn").style.display = "none";
+  document.getElementById("restart").style.display = "none";
 
-  loadCard();
+  round = QUESTIONS.sort(() => Math.random() - 0.5).slice(0,5);
+  showQuestion();
 }
 
-// ========= VIS SPØRSMÅL =========
-function loadCard() {
-  const current = round[index];
-  document.getElementById("question").textContent = current.q;
+// VIS SPØRSMÅL
+function showQuestion() {
+  if (index >= round.length) {
+    document.getElementById("question").textContent = "Ferdig 🎉";
+    document.getElementById("answers").innerHTML = "";
+    document.getElementById("feedback").textContent =
+      "Du fikk " + score + " poeng";
+    document.getElementById("restart").style.display = "block";
+    return;
+  }
+
+  const q = round[index];
+  document.getElementById("question").textContent = q.q;
   document.getElementById("feedback").textContent = "";
   document.getElementById("score").textContent = "Poeng: " + score;
 
-  const answersDiv = document.getElementById("answers");
-  answersDiv.innerHTML = "";
+  const answers = [];
+  answers.push({ ok:true, data: mode==="ask" ? q.ask[0] : q.text[0] });
+  answers.push({ ok:false, data: mode==="ask" ? q.ask[1] : q.text[1] });
+  answers.sort(()=>Math.random()-0.5);
 
-  // Lag svarobjekter og shuffle
-  let options = [];
+  const container = document.getElementById("answers");
+  container.innerHTML = "";
 
-  if (mode === "ask") {
-    options = [
-      { content: `<span class="symbol">${current.ask[0][0]}</span><br>${current.ask[0][1]}`, correct:true },
-      { content: `<span class="symbol">${current.ask[1][0]}</span><br>${current.ask[1][1]}`, correct:false }
-    ];
-  } else {
-    options = [
-      { content: current.text[0], correct:true },
-      { content: current.text[1], correct:false }
-    ];
-  }
-
-  shuffle(options);
-
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.innerHTML = opt.content;
-    btn.onclick = () => checkAnswer(btn, opt.correct);
-    answersDiv.appendChild(btn);
+  answers.forEach(a=>{
+    const b = document.createElement("button");
+    if (mode==="ask") {
+      b.innerHTML = `<span class="symbol">${a.data[0]}</span><br>${a.data[1]}`;
+    } else {
+      b.textContent = a.data;
+    }
+    b.onclick = ()=>handleAnswer(b,a.ok);
+    container.appendChild(b);
   });
 }
 
-// ========= SVAR =========
-function checkAnswer(button, isCorrect) {
+// SVAR
+function handleAnswer(btn, correct) {
   const buttons = document.querySelectorAll("#answers button");
-  buttons.forEach(b => b.disabled = true);
+  buttons.forEach(b=>b.disabled=true);
 
-  if (isCorrect) {
-    button.classList.add("correct");
-    document.getElementById("feedback").textContent = "Bra jobbet!";
+  if (correct) {
+    btn.className="correct";
+    document.getElementById("feedback").textContent="Bra jobbet!";
     score++;
-
-    setTimeout(() => {
-      index++;
-      index < round.length ? loadCard() : finishRound();
-    }, 800);
-
+    index++;
+    setTimeout(showQuestion,800);
   } else {
-    button.classList.add("wrong");
-    document.getElementById("feedback").textContent = "Prøv igjen";
-    setTimeout(loadCard, 1200);
+    btn.className="wrong";
+    document.getElementById("feedback").textContent="Prøv igjen";
+    setTimeout(showQuestion,1200);
   }
 }
 
-// ========= SLUTT =========
-function finishRound() {
-  document.getElementById("question").textContent = "Runden er ferdig 🎉";
-  document.getElementById("answers").innerHTML = "";
-  document.getElementById("feedback").textContent =
-    "Du fikk " + score + " av " + QUESTIONS_PER_ROUND;
-  document.getElementById("restartBtn").style.display = "block";
-}
-
-function showMenu() {
-  document.getElementById("play").style.display = "none";
-  document.getElementById("menu").style.display = "block";
+function resetGame() {
+  document.getElementById("menu").style.display="block";
+  document.getElementById("play").style.display="none";
+  document.getElementById("restart").style.display="none";
 }
 </script>
 
 </body>
 </html>
-``
