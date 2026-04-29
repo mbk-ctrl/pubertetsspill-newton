@@ -2,17 +2,177 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>TEST</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pubertet – Flashcards</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f2f2f2;
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+#box {
+  background:white;
+  padding:30px;
+  width:420px;
+  border-radius:10px;
+  text-align:center;
+}
+
+button {
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  font-size:16px;
+}
+
+.correct { background:#4CAF50; color:white; }
+.wrong { background:#F44336; color:white; }
+
+.symbol { font-size:36px; }
+
+#play, #restart {
+  display:none;
+}
+</style>
 </head>
 
 <body>
 
-<h1>TESTSIDE</h1>
+<div id="box">
 
-<button onclick="alert('KNAPPEN FUNGERER')">
-Klikk meg
-</button>
+<!-- MENY -->
+<div id="menu">
+  <h2>Velg spillmodus</h2>
+  <button onclick="startGame('text')">📘 Kun tekst</button>
+  <button onclick="startGame('ask')">🗣️ ASK (symbol + tekst)</button>
+</div>
+
+<!-- SPILL -->
+<div id="play">
+  <div id="question"></div>
+  <div id="answers"></div>
+  <div id="feedback"></div>
+  <div id="score">Poeng: 0</div>
+</div>
+
+<button id="restart" onclick="resetGame()">Spill igjen</button>
+
+</div>
+
+<script>
+let mode = "text";
+let score = 0;
+let index = 0;
+let round = [];
+
+const QUESTIONS = [
+  {
+    q: "Hva kalles perioden kroppen endrer seg?",
+    text: ["Pubertet","Barndom"],
+    ask: [["🧍➡️🧑","Pubertet"],["❌","Nei"]]
+  },
+  {
+    q: "Hva starter puberteten?",
+    text: ["Hormoner","Mat"],
+    ask: [["🧪","Hormoner"],["🍔","Mat"]]
+  },
+  {
+    q: "Hva skjer hos gutter?",
+    text: ["Stemmen blir dyp","Menstruasjon"],
+    ask: [["🎤⬇️","Stemmen"],["❌","Nei"]]
+  },
+  {
+    q: "Er pubertet normalt?",
+    text: ["Ja","Nei"],
+    ask: [["✅","Ja"],["❌","Nei"]]
+  },
+  {
+    q: "Hva kan hjelpe hvis det er vanskelig?",
+    text: ["Snakke med voksen","Holde alt inne"],
+    ask: [["🗣️","Snakke"],["🤐","Tie"]]
+  }
+];
+
+// START SPILL
+function startGame(chosenMode) {
+  mode = chosenMode;
+  score = 0;
+  index = 0;
+
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("play").style.display = "block";
+  document.getElementById("restart").style.display = "none";
+
+  round = QUESTIONS.sort(() => Math.random() - 0.5).slice(0,5);
+  showQuestion();
+}
+
+// VIS SPØRSMÅL
+function showQuestion() {
+  if (index >= round.length) {
+    document.getElementById("question").textContent = "Ferdig 🎉";
+    document.getElementById("answers").innerHTML = "";
+    document.getElementById("feedback").textContent =
+      "Du fikk " + score + " poeng";
+    document.getElementById("restart").style.display = "block";
+    return;
+  }
+
+  const q = round[index];
+  document.getElementById("question").textContent = q.q;
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("score").textContent = "Poeng: " + score;
+
+  const answers = [];
+  answers.push({ ok:true, data: mode==="ask" ? q.ask[0] : q.text[0] });
+  answers.push({ ok:false, data: mode==="ask" ? q.ask[1] : q.text[1] });
+  answers.sort(()=>Math.random()-0.5);
+
+  const container = document.getElementById("answers");
+  container.innerHTML = "";
+
+  answers.forEach(a=>{
+    const b = document.createElement("button");
+    if (mode==="ask") {
+      b.innerHTML = `<span class="symbol">${a.data[0]}</span><br>${a.data[1]}`;
+    } else {
+      b.textContent = a.data;
+    }
+    b.onclick = ()=>handleAnswer(b,a.ok);
+    container.appendChild(b);
+  });
+}
+
+// SVAR
+function handleAnswer(btn, correct) {
+  const buttons = document.querySelectorAll("#answers button");
+  buttons.forEach(b=>b.disabled=true);
+
+  if (correct) {
+    btn.className="correct";
+    document.getElementById("feedback").textContent="Bra jobbet!";
+    score++;
+    index++;
+    setTimeout(showQuestion,800);
+  } else {
+    btn.className="wrong";
+    document.getElementById("feedback").textContent="Prøv igjen";
+    setTimeout(showQuestion,1200);
+  }
+}
+
+function resetGame() {
+  document.getElementById("menu").style.display="block";
+  document.getElementById("play").style.display="none";
+  document.getElementById("restart").style.display="none";
+}
+</script>
 
 </body>
 </html>
-``
